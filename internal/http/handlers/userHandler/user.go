@@ -3,28 +3,28 @@ package userHandler
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"io"
+	"net/http"
+
 	"github.com/Shivang2003/NotesProject/internal/storage"
 	"github.com/Shivang2003/NotesProject/internal/types"
-	"github.com/go-playground/validator/v10"
 	"github.com/Shivang2003/NotesProject/internal/utils/response"
-
+	"github.com/go-playground/validator/v10"
 )
 
 func CreateUserHandler(storage storage.UserStorage) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		// storage.CreateUser()
-		
+
 		var user types.User
 
 		err := json.NewDecoder(r.Body).Decode(&user)
 
-		if errors.Is(err, io.EOF){
+		if errors.Is(err, io.EOF) {
 			http.Error(w, "Request body cannot be empty", http.StatusBadRequest)
 			return
-		} 
+		}
 
 		if err != nil {
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -37,11 +37,16 @@ func CreateUserHandler(storage storage.UserStorage) http.HandlerFunc {
 
 			validateErrs := err.(validator.ValidationErrors)
 
-			response.WriteJson(w, http.StatusBadRequest,response.VlidateError(validateErrs))
+			response.WriteJson(w, http.StatusBadRequest, response.VlidateError(validateErrs))
 			return
 		}
 
-		storage.CreateUser(user)
+		err = storage.CreateUser(user)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 
@@ -51,3 +56,5 @@ func CreateUserHandler(storage storage.UserStorage) http.HandlerFunc {
 	}
 
 }
+
+
